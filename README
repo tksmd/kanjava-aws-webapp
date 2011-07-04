@@ -1,0 +1,6 @@
+
+dotcloud create kanjava
+
+mvn -Pproduction clean package
+
+dotcloud push kanjava target/dotcloud
