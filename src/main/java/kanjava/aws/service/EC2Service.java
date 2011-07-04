@@ -1,6 +1,10 @@
 package kanjava.aws.service;
 
+import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
@@ -8,23 +12,49 @@ import com.amazonaws.services.ec2.model.AttachVolumeResult;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DetachVolumeRequest;
 import com.amazonaws.services.ec2.model.DetachVolumeResult;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.Placement;
+import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeAttachment;
+import com.google.common.base.Predicate;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 public class EC2Service extends AbstractAWSService {
 
 	@Inject
 	private AmazonEC2 ec2;
+	
+	@Inject
+	@Named("EC2 KeyName")
+	private String keyName;
+
+	/**
+	 * 稼働しているインスタンスのリストを取得する
+	 * 
+	 * @return
+	 */
+	public List<Instance> getRunnningInstances() {
+		DescribeInstancesResult result = ec2.describeInstances();
+		List<Instance> ret = new ArrayList<Instance>();
+		List<Reservation> reservations = result.getReservations();
+		for (Reservation r : reservations) {
+			ret.addAll(filter(r.getInstances(), new InstanceStatePredicate(
+					InstanceStateName.Running)));
+		}
+		return ret;
+	}
 
 	/**
 	 * インスタンスを生成する
@@ -35,7 +65,7 @@ public class EC2Service extends AbstractAWSService {
 	public Instance runInstance(String imageId) {
 		RunInstancesRequest request = new RunInstancesRequest(imageId, 1, 1);
 		request.setInstanceType("t1.micro");
-		request.setKeyName("tksmd"); // TODO
+		request.setKeyName(keyName);
 		request.setPlacement(new Placement(availabilityZone));
 		RunInstancesResult result = ec2.runInstances(request);
 		return result.getReservation().getInstances().get(0);
@@ -103,6 +133,24 @@ public class EC2Service extends AbstractAWSService {
 	public void deleteVolume(String volumeId) {
 		DeleteVolumeRequest request = new DeleteVolumeRequest(volumeId);
 		ec2.deleteVolume(request);
+	}
+
+	/**
+	 * インスタンスの状態によってフィルタリングするための {@link Predicate}
+	 */
+	static class InstanceStatePredicate implements Predicate<Instance> {
+
+		InstanceStateName stateName;
+
+		public InstanceStatePredicate(InstanceStateName stateName) {
+			this.stateName = stateName;
+		}
+
+		@Override
+		public boolean apply(Instance input) {
+			InstanceState state = input.getState();
+			return this.stateName.toString().equals(state.getName());
+		}
 	}
 
 }

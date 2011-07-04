@@ -20,7 +20,7 @@ public class EC2ServiceTest {
 
 	@Test
 	public void testGetRunnningInstances1() throws Exception {
-
+		service.getRunnningInstances();
 	}
 
 }

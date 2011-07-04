@@ -9,5 +9,10 @@
 </head>
 <body>
 <h2>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</h2>
+
+<ul>
+<li><a href="status">ステータス</a></li>
+</ul>
+
 </body>
 </html>

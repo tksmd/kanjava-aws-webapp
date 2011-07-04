@@ -14,15 +14,16 @@ import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.name.Names;
 
 public class AWSModule extends AbstractModule {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(AWSModule.class);
 
-	private AWSCredentials credentials;
+	private static final String ENDPOINT = "ec2.ap-northeast-1.amazonaws.com";
 
-	static final String ENDPOINT = "ec2.ap-northeast-1.amazonaws.com";
+	private AWSCredentials credentials;
 
 	@Override
 	protected void configure() {
@@ -36,6 +37,8 @@ public class AWSModule extends AbstractModule {
 			throw new RuntimeException(e);
 		}
 		bind(AWSCredentials.class).toInstance(credentials);
+		bind(String.class).annotatedWith(Names.named("EC2 KeyName"))
+				.toInstance("tksmd");
 	}
 
 	@Provides

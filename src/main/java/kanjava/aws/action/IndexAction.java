@@ -16,11 +16,17 @@
 
 package kanjava.aws.action;
 
+import java.util.List;
+
+import kanjava.aws.service.EC2Service;
+
 import org.seasar.cubby.action.ActionClass;
 import org.seasar.cubby.action.ActionResult;
 import org.seasar.cubby.action.Forward;
 import org.seasar.cubby.action.Path;
 
+import com.amazonaws.services.ec2.model.Instance;
+import com.google.inject.Inject;
 import com.google.inject.servlet.RequestScoped;
 
 @RequestScoped
@@ -28,7 +34,22 @@ import com.google.inject.servlet.RequestScoped;
 @Path("/")
 public class IndexAction {
 
+	@Inject
+	private EC2Service ec2Service;
+
+	private List<Instance> instances;
+
+	public List<Instance> getInstances() {
+		return instances;
+	}
+
 	public ActionResult index() {
 		return new Forward("index.jsp");
 	}
+
+	public ActionResult status() {
+		this.instances = ec2Service.getRunnningInstances();
+		return new Forward("status.jsp");
+	}
+
 }
