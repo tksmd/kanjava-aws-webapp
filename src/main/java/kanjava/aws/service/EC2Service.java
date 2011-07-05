@@ -35,7 +35,7 @@ public class EC2Service extends AbstractAWSService {
 
 	@Inject
 	private AmazonEC2 ec2;
-	
+
 	@Inject
 	@Named("EC2 KeyName")
 	private String keyName;

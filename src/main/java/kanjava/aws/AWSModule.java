@@ -27,6 +27,9 @@ public class AWSModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
+
+		bind(String.class).annotatedWith(Names.named("EC2 KeyName"))
+				.toInstance("tksmd");
 		try {
 			credentials = new PropertiesCredentials(
 					getResource("AwsCredentials.properties"));
@@ -37,8 +40,6 @@ public class AWSModule extends AbstractModule {
 			throw new RuntimeException(e);
 		}
 		bind(AWSCredentials.class).toInstance(credentials);
-		bind(String.class).annotatedWith(Names.named("EC2 KeyName"))
-				.toInstance("tksmd");
 	}
 
 	@Provides

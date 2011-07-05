@@ -5,8 +5,10 @@ import kanjava.aws.service.ELBService;
 
 import org.seasar.cubby.action.ActionResult;
 import org.seasar.cubby.action.Direct;
+import org.seasar.cubby.action.Json;
 import org.seasar.cubby.action.Path;
 
+import com.amazonaws.services.ec2.model.Instance;
 import com.google.inject.Inject;
 
 public class ApiAction {
@@ -17,10 +19,10 @@ public class ApiAction {
 	@Inject
 	private ELBService elbService;
 
-	@Path("api/ec2/runinstance/")
+	@Path("api/ec2/run/")
 	public ActionResult runInstance() {
-
-		return new Direct();
+		Instance instance = ec2Service.runInstance("");
+		return new Json(instance);
 	}
 
 }

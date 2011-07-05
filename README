@@ -1,6 +1,11 @@
+put AwsCredentials.properties on src/main/resources
+
+mvn eclipse:clean eclipse:eclipse
+mvn eclipse:configure-workspace -Declipse.workspace=/Users/someda/Documents/workspace-webdb/
+
+mvn jetty:run
 
 dotcloud create kanjava
 
 mvn -Pproduction clean package
-
 dotcloud push kanjava target/dotcloud
