@@ -11,7 +11,9 @@
 <h2>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</h2>
 
 <ul>
-<li><a href="status">ステータス</a></li>
+  <li><a href="editor">エディタ</a></li>
+  <li><a href="status">ステータス</a></li>
+  <li><a href="api/">API</a></li>
 </ul>
 
 </body>

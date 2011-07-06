@@ -256,11 +256,21 @@ line.separator=\n
 						<artifactId>maven-war-plugin</artifactId>
 						<configuration>
 							<warName>ROOT</warName>
+							<warSourceExclude>js,css</warSourceExclude>
+							<webResources>
+								<resource>
+									<directory>${project.build.directory}/yuicompressed</directory>
+									<includes>
+										<include>js/*.js</include>
+										<include>css/*.css</include>										
+									</includes>
+								</resource>
+							</webResources>
 						</configuration>
 					</plugin>
 					<plugin>
 						<artifactId>maven-antrun-plugin</artifactId>
-						<executions>
+						<executions>						
 							<execution>
 								<phase>package</phase>
 								<configuration>

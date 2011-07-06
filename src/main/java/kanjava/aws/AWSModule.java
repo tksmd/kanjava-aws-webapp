@@ -25,11 +25,19 @@ public class AWSModule extends AbstractModule {
 
 	private AWSCredentials credentials;
 
+	/**
+	 * AWS のアカウント環境に依存する設定を行う
+	 */
 	@Override
 	protected void configure() {
 
 		bind(String.class).annotatedWith(Names.named("EC2 KeyName"))
 				.toInstance("tksmd");
+		bind(String.class).annotatedWith(Names.named("Tomcat ImageId"))
+				.toInstance("aaaaaa");
+		bind(String.class).annotatedWith(Names.named("GlassFish ImageId"))
+				.toInstance("bbbbbb");
+
 		try {
 			credentials = new PropertiesCredentials(
 					getResource("AwsCredentials.properties"));

@@ -51,5 +51,9 @@ public class IndexAction {
 		this.instances = ec2Service.getRunnningInstances();
 		return new Forward("status.jsp");
 	}
-
+	
+	public ActionResult editor(){
+		return new Forward("editor.jsp");
+	}
+	
 }

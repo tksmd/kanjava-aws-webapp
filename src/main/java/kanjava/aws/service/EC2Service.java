@@ -1,6 +1,5 @@
 package kanjava.aws.service;
 
-import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.ArrayList;
@@ -12,9 +11,11 @@ import com.amazonaws.services.ec2.model.AttachVolumeResult;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DetachVolumeRequest;
 import com.amazonaws.services.ec2.model.DetachVolumeResult;
+import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
@@ -46,12 +47,19 @@ public class EC2Service extends AbstractAWSService {
 	 * @return
 	 */
 	public List<Instance> getRunnningInstances() {
-		DescribeInstancesResult result = ec2.describeInstances();
+
+		DescribeInstancesRequest request = new DescribeInstancesRequest();
+		request.setFilters(newArrayList(new Filter("instance-state-code",
+				newArrayList("16"))));
+
+		DescribeInstancesResult result = ec2.describeInstances(request);
+
 		List<Instance> ret = new ArrayList<Instance>();
 		List<Reservation> reservations = result.getReservations();
 		for (Reservation r : reservations) {
-			ret.addAll(filter(r.getInstances(), new InstanceStatePredicate(
-					InstanceStateName.Running)));
+			ret.addAll(r.getInstances());
+			// ret.addAll(filter(r.getInstances(), new InstanceStatePredicate(
+			// InstanceStateName.Running)));
 		}
 		return ret;
 	}
@@ -92,6 +100,7 @@ public class EC2Service extends AbstractAWSService {
 	public Volume createVolume() {
 		CreateVolumeRequest request = new CreateVolumeRequest(1,
 				availabilityZone);
+		request.setSize(1);
 		CreateVolumeResult result = ec2.createVolume(request);
 		return result.getVolume();
 	}

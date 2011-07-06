@@ -1,0 +1,29 @@
+body{
+  margin:0;
+  padding:0;
+}
+
+#item{
+  width:800px;
+  padding:0;
+  list-style:none;
+  background-color:#ddd;
+}
+
+#item li{
+  display:inline;
+}
+
+#item li.selected{
+  background-color:#fff;
+}
+
+#item li img{
+  -khtml-user-drag: element; /*for safari*/
+}
+
+#editor{
+  background-color:#ddd;
+}
+
+
