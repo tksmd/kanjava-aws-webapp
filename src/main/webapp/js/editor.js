@@ -556,7 +556,7 @@
 
 	_.extend(InstanceController.prototype, Controller.prototype, {
 		onAdd : function() {
-			console.log("create instance ... AMI[" + this.opts["ami"] + "]");
+			console.log("create instance ... AMI[" + this.opts["type"] + "]");
 		},
 		onRemove : function() {
 			console.log("remove instance ...");
