@@ -225,6 +225,11 @@ line.separator=\n
 			<version>6.1.22</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.twitter4j</groupId>
+			<artifactId>twitter4j-core</artifactId>
+			<version>[2.2,)</version>
+		</dependency>
 	</dependencies>
 	<profiles>
 		<profile>
@@ -262,7 +267,7 @@ line.separator=\n
 									<directory>${project.build.directory}/yuicompressed</directory>
 									<includes>
 										<include>js/*.js</include>
-										<include>css/*.css</include>										
+										<include>css/*.css</include>
 									</includes>
 								</resource>
 							</webResources>
@@ -270,7 +275,7 @@ line.separator=\n
 					</plugin>
 					<plugin>
 						<artifactId>maven-antrun-plugin</artifactId>
-						<executions>						
+						<executions>
 							<execution>
 								<phase>package</phase>
 								<configuration>

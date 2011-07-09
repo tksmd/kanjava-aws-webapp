@@ -24,7 +24,10 @@
   <listener>
     <listener-class>org.seasar.cubby.plugins.guice.CubbyGuiceServletContextListener</listener-class>
   </listener>
-  <filter>
+  <listener>
+    <listener-class>kanjava.aws.servlet.TweetListener</listener-class>
+  </listener>  
+  <filter>  
     <filter-name>senderror</filter-name>
     <filter-class>org.seasar.cubby.filter.SendErrorFilter</filter-class>
     <init-param>

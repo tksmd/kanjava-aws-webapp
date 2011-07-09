@@ -18,6 +18,7 @@ package kanjava.aws.action;
 
 import java.util.List;
 
+import kanjava.aws.EC2Metadata;
 import kanjava.aws.service.EC2Service;
 
 import org.seasar.cubby.action.ActionClass;
@@ -39,11 +40,18 @@ public class IndexAction {
 
 	private List<Instance> instances;
 
+	private EC2Metadata metadata;
+
 	public List<Instance> getInstances() {
 		return instances;
 	}
 
+	public EC2Metadata getMetadata() {
+		return metadata;
+	}
+
 	public ActionResult index() {
+		this.metadata = new EC2Metadata();		
 		return new Forward("index.jsp");
 	}
 
@@ -51,9 +59,14 @@ public class IndexAction {
 		this.instances = ec2Service.getRunnningInstances();
 		return new Forward("status.jsp");
 	}
-	
-	public ActionResult editor(){
+
+	public ActionResult editor() {
 		return new Forward("editor.jsp");
 	}
-	
+
+	public ActionResult metadata() {
+		this.metadata = new EC2Metadata();
+		return new Forward("metadata.jsp");
+	}
+
 }

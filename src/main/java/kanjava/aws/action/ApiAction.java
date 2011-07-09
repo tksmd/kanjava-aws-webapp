@@ -36,7 +36,7 @@ public class ApiAction {
 
 	@RequestParameter
 	private String instanceId;
-	
+
 	@RequestParameter
 	private String volumeId;
 
@@ -48,9 +48,9 @@ public class ApiAction {
 	public ActionResult runInstance() {
 		Instance instance = null;
 		if ("tomcat".equals(imageType)) {
-			instance = ec2Service.runInstance(tomcatImageId);
+			instance = ec2Service.runInstance(tomcatImageId, imageType);
 		} else if ("glassfish".equals(imageType)) {
-			instance = ec2Service.runInstance(glassFishImageId);
+			instance = ec2Service.runInstance(glassFishImageId, imageType);
 		}
 		return new Json(instance);
 	}
@@ -67,11 +67,11 @@ public class ApiAction {
 		Volume volume = ec2Service.createVolume();
 		return new Json(volume);
 	}
-	
+
 	@Path("ebs/delete/{volumeId,[a-zA-Z0-9]+}")
-	public ActionResult deleteVolume(){		
+	public ActionResult deleteVolume() {
 		ec2Service.deleteVolume(volumeId);
-		return new Json(new Object());		
+		return new Json(new Object());
 	}
 
 }

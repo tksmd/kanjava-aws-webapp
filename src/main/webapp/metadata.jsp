@@ -5,19 +5,28 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta http-equiv="Content-Script-Type" content="text/JavaScript" />
   <link href="${contextPath}/css/default.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
-  <title>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</title>
+  <title>メタデータ</title>
 </head>
 <body>
-<h2>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</h2>
-
-<ul>
-  <li><a href="editor">エディタ</a></li>
-  <li><a href="status">ステータス</a></li>
-  <li><a href="api/">API</a></li>
-<c:if test="${metadata.available }">
-  <li><a href="metadata">メタデータ</a></li>  
-</c:if>  
-</ul>
+<h2>メタデータ一覧</h2>
+<table>
+  <thead>
+    <tr>
+      <th>インスタンスID</th>
+      <th>公開 DNS 名</th>
+      <th>IP Address</th>
+      <th>アベイラビリティゾーン</th>      
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><c:out value="${metadata.instanceId }"/></td>
+      <td><c:out value="${metadata.publicHostName}"/></td>
+      <td><c:out value="${metadata.publicIPv4}"/></td>
+      <td>-</td>    
+    </tr>
+  </tbody>
+</table>
 
 </body>
 </html>

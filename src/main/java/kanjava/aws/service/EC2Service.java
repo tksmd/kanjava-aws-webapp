@@ -8,6 +8,7 @@ import java.util.List;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeResult;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
@@ -22,13 +23,16 @@ import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeAttachment;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+@Singleton
 public class EC2Service extends AbstractAWSService {
 
 	private static final String RUNNNING_STATE_CODE = "16";
@@ -43,13 +47,16 @@ public class EC2Service extends AbstractAWSService {
 	/**
 	 * 稼働しているインスタンスのリストを取得する
 	 * 
+	 * @see <a
+	 *      href="http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html">DescribeInstances</a>
+	 * 
 	 * @return
 	 */
 	public List<Instance> getRunnningInstances() {
-
-		DescribeInstancesRequest request = new DescribeInstancesRequest();
-		request.setFilters(newArrayList(new Filter("instance-state-code",
-				newArrayList(RUNNNING_STATE_CODE))));
+		Filter runningFilter = new Filter("instance-state-code",
+				newArrayList(RUNNNING_STATE_CODE));
+		DescribeInstancesRequest request = new DescribeInstancesRequest()
+				.withFilters(newArrayList(runningFilter));
 		DescribeInstancesResult result = ec2.describeInstances(request);
 		List<Instance> ret = new ArrayList<Instance>();
 		List<Reservation> reservations = result.getReservations();
@@ -65,14 +72,17 @@ public class EC2Service extends AbstractAWSService {
 	 * @param imageId
 	 * @return
 	 */
-	public Instance runInstance(String imageId) {
-		RunInstancesRequest request = new RunInstancesRequest(imageId, 1, 1);
-		request.setInstanceType("t1.micro");
-		request.setKeyName(keyName);
-		request.setPlacement(new Placement(availabilityZone));
-		request.setSecurityGroups(newArrayList("kanjava"));
+	public Instance runInstance(String imageId, String name) {
+		RunInstancesRequest request = new RunInstancesRequest(imageId, 1, 1)
+				.withInstanceType("t1.micro").withKeyName(keyName)
+				.withPlacement(new Placement(availabilityZone))
+				.withSecurityGroups("kanjava");
 		RunInstancesResult result = ec2.runInstances(request);
-		return result.getReservation().getInstances().get(0);
+		Instance ret = result.getReservation().getInstances().get(0);
+
+		// タグを打つ
+		createNameTag(ret.getInstanceId(), name);
+		return ret;
 	}
 
 	/**
@@ -95,8 +105,7 @@ public class EC2Service extends AbstractAWSService {
 	 */
 	public Volume createVolume() {
 		CreateVolumeRequest request = new CreateVolumeRequest(1,
-				availabilityZone);
-		request.setSize(1);
+				availabilityZone).withSize(1);
 		CreateVolumeResult result = ec2.createVolume(request);
 		return result.getVolume();
 	}
@@ -124,8 +133,8 @@ public class EC2Service extends AbstractAWSService {
 	 * @return
 	 */
 	public VolumeAttachment detachVolume(String volumeId) {
-		DetachVolumeRequest request = new DetachVolumeRequest(volumeId);
-		request.setForce(true);
+		DetachVolumeRequest request = new DetachVolumeRequest(volumeId)
+				.withForce(true);
 		DetachVolumeResult result = ec2.detachVolume(request);
 		return result.getAttachment();
 	}
@@ -140,4 +149,15 @@ public class EC2Service extends AbstractAWSService {
 		ec2.deleteVolume(request);
 	}
 
+	/**
+	 * Name タグを設定する
+	 * 
+	 * @param resourceId
+	 * @param name
+	 */
+	protected void createNameTag(String resourceId, String name) {
+		CreateTagsRequest request = new CreateTagsRequest().withResources(
+				resourceId).withTags(new Tag("Name", name));
+		ec2.createTags(request);
+	}
 }

@@ -19,7 +19,7 @@
 
 <configuration>
   <appender name="C" class="ch.qos.logback.core.ConsoleAppender">
-    <ImmediateFlush>true</ImmediateFlush>
+    <ImmediateFlush>true</ImmediateFlush>    
     <Target>System.out</Target>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%-5p %d [%t] %m%n</pattern>
