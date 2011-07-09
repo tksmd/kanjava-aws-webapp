@@ -28,9 +28,9 @@ public class TweetListener implements ServletContextListener {
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
 		if (Utils.isTweetMonitor()) {
-			LOGGER.info("Start kanjava tweet monitor");
+			LOGGER.info("Start kanjava TweetMonitorTask");
 			ServletContext context = sce.getServletContext();
-			timer = new Timer("Kanjava TweetMonitor");
+			timer = new Timer("kanjava TweetMonitorTask");
 			timer.schedule(new TweetMonitorTask(context), 0, PERIOD);
 		}
 	}
@@ -38,7 +38,7 @@ public class TweetListener implements ServletContextListener {
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
 		if (timer != null) {
-			LOGGER.info("Stop kanjava tweet monitor");
+			LOGGER.info("Stop kanjava TweetMonitorTask");
 			timer.cancel();
 		}
 	}
@@ -51,7 +51,7 @@ public class TweetListener implements ServletContextListener {
 
 		TweetMonitor monitor;
 
-		TweetMonitorTask(ServletContext context) {
+		TweetMonitorTask(final ServletContext context) {
 			this.context = context;
 			this.monitor = new TweetMonitor(PERIOD);
 			setupInjector();
@@ -66,7 +66,8 @@ public class TweetListener implements ServletContextListener {
 			CloudWatchService service = injector
 					.getInstance(CloudWatchService.class);
 			Map<String, Number> tweetCounts = monitor.getTweetCounts();
-			service.putMetricData("tweet counts", "users", tweetCounts);
+			service.putMetricData("TweetCounts", "Speakers Metrics",
+					tweetCounts);
 		}
 
 		void setupInjector() {

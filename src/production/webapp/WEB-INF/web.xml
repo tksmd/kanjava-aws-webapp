@@ -11,6 +11,9 @@
 	<listener>
 		<listener-class>org.seasar.cubby.plugins.guice.CubbyGuiceServletContextListener</listener-class>
 	</listener>
+	<listener>
+		<listener-class>kanjava.aws.servlet.TweetListener</listener-class>
+	</listener>
 	<filter>
 		<filter-name>senderror</filter-name>
 		<filter-class>org.seasar.cubby.filter.SendErrorFilter</filter-class>
@@ -85,4 +88,21 @@
 			<trim-directive-whitespaces>true</trim-directive-whitespaces>
 		</jsp-property-group>
 	</jsp-config>
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>User Auth</web-resource-name>
+			<url-pattern>/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>kanjava</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<login-config>
+		<auth-method>BASIC</auth-method>
+		<realm-name>User Auth</realm-name>
+	</login-config>
+	<security-role>
+		<role-name>kanjava</role-name>
+	</security-role>
+
 </web-app>

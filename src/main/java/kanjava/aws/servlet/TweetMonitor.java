@@ -63,28 +63,29 @@ class TweetMonitor {
 		int page = 1;
 		boolean cont = true;
 		Date start = new Date(new Date().getTime() - period);
+		Comparator<Status> sorter = Collections
+				.reverseOrder(new StatusComparator());
 		while (cont && page <= 3) {
 			Paging paging = new Paging(page, 10);
 			ResponseList<Status> timeline = twitter.getUserTimeline(user,
 					paging);
-			Comparator<Status> newer = Collections
-					.reverseOrder(new StatusComparator());
-			Collections.sort(timeline, newer);
+			Collections.sort(timeline, sorter);
 			for (Status s : timeline) {
-				if (s.getCreatedAt().after(start)) {
+				cont = s.getCreatedAt().after(start);
+				if (cont) {
 					ret++;
 				} else {
-					cont = false;
+					break;
 				}
-			}
-			if (!cont) {
-				break;
 			}
 			page++;
 		}
 		return ret;
 	}
 
+	/**
+	 * tweet の日時でソートする {@link Comparator}
+	 */
 	static class StatusComparator implements Comparator<Status> {
 		@Override
 		public int compare(Status o1, Status o2) {

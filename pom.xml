@@ -262,6 +262,7 @@ line.separator=\n
 						<configuration>
 							<warName>ROOT</warName>
 							<warSourceExclude>js,css</warSourceExclude>
+							<webXml>${basedir}/src/production/webapp/WEB-INF/web.xml</webXml>
 							<webResources>
 								<resource>
 									<directory>${project.build.directory}/yuicompressed</directory>
@@ -286,7 +287,8 @@ line.separator=\n
 										<copy todir="${dotcloud.release.dir}" flatten="true">
 											<fileset dir="${basedir}">
 												<include name="dotcloud.yml" />
-												<include name="**/ROOT.war" />
+												<include name="target/ROOT.war" />
+												<include name="src/production/config/realm.properties"/>
 											</fileset>
 										</copy>
 									</tasks>
