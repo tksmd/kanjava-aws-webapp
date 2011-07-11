@@ -1,6 +1,11 @@
 package kanjava.aws.action;
 
+import static com.google.common.collect.Maps.*;
+
+import java.util.Map;
+
 import kanjava.aws.service.EC2Service;
+import kanjava.aws.service.ELBService;
 
 import org.seasar.cubby.action.ActionClass;
 import org.seasar.cubby.action.ActionResult;
@@ -24,6 +29,9 @@ public class ApiAction {
 	private EC2Service ec2Service;
 
 	@Inject
+	private ELBService elbService;
+
+	@Inject
 	@Named("Tomcat ImageId")
 	private String tomcatImageId;
 
@@ -40,6 +48,9 @@ public class ApiAction {
 	@RequestParameter
 	private String volumeId;
 
+	@RequestParameter
+	private String elbName;
+
 	public ActionResult index() {
 		return new Forward("/api.jsp");
 	}
@@ -55,7 +66,13 @@ public class ApiAction {
 		return new Json(instance);
 	}
 
-	@Path("ec2/terminate/{instanceId,[a-zA-Z0-9]+}")
+	@Path("ec2/instance/{instanceId,i-[a-zA-Z0-9]+}")
+	public ActionResult getInstance() {
+		Instance instance = ec2Service.getInstance(instanceId);
+		return new Json(instance);
+	}
+
+	@Path("ec2/terminate/{instanceId,i-[a-zA-Z0-9]+}")
 	public ActionResult terminateInstance() {
 		InstanceStateChange stateChange = ec2Service
 				.terminateInstance(instanceId);
@@ -68,9 +85,24 @@ public class ApiAction {
 		return new Json(volume);
 	}
 
-	@Path("ebs/delete/{volumeId,[a-zA-Z0-9]+}")
+	@Path("ebs/delete/{volumeId,v-[a-zA-Z0-9]+}")
 	public ActionResult deleteVolume() {
 		ec2Service.deleteVolume(volumeId);
+		return new Json(new Object());
+	}
+
+	@Path("elb/create/{elbName,[a-zA-Z0-9\\-]+}")
+	public ActionResult createLoadBalancer() {
+		String dnsName = elbService.createLoadBalancer(elbName);
+		Map<String, String> ret = newHashMap();
+		ret.put("name", elbName);
+		ret.put("dnsName", dnsName);
+		return new Json(ret);
+	}
+
+	@Path("elb/delete/{elbName,[a-zA-Z0-9\\-]+}")
+	public ActionResult deleteLoadBalancer() {
+		elbService.deleteLoadBalancer(elbName);
 		return new Json(new Object());
 	}
 

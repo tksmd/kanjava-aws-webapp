@@ -1,7 +1,8 @@
 put AwsCredentials.properties on src/main/resources
+modify src/production/config/realm.properties
 
 mvn eclipse:clean eclipse:eclipse
-mvn eclipse:configure-workspace -Declipse.workspace=/Users/someda/Documents/workspace-webdb/
+mvn eclipse:configure-workspace -Declipse.workspace=<your workspace dir>
 
 mvn jetty:run
 

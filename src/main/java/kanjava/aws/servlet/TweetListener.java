@@ -18,8 +18,7 @@ import com.google.inject.Injector;
 
 public class TweetListener implements ServletContextListener {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(TweetListener.class);
+	static final Logger LOGGER = LoggerFactory.getLogger(TweetListener.class);
 
 	static final long PERIOD = 10 * 60 * 1000;
 
@@ -61,6 +60,7 @@ public class TweetListener implements ServletContextListener {
 		public void run() {
 			setupInjector();
 			if (injector == null) {
+				LOGGER.warn("Injector not found, thus skip update metrics");
 				return;
 			}
 			CloudWatchService service = injector

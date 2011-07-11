@@ -32,7 +32,7 @@ class TweetMonitor {
 
 	long period;
 
-	TweetMonitor(long period) {
+	TweetMonitor(long period) {		
 		this.period = period;
 		this.twitter = new TwitterFactory().getInstance();
 	}

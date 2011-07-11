@@ -36,8 +36,8 @@ jQuery(function($){
   var basePath = "${contextPath}";	
 
   // register properties
-  $.data($("#item_tomcat")[0],"props",{"key":"instance","opts":{"type":"tomcat"}});
-  $.data($("#item_glassfish")[0],"props",{"key":"instance","opts":{"type":"glassfish"}});
+  $.data($("#item_tomcat")[0],"props",{"key":"ec2","opts":{"type":"tomcat"}});
+  $.data($("#item_glassfish")[0],"props",{"key":"ec2","opts":{"type":"glassfish"}});
   $.data($("#item_ebs")[0],"props",{"key":"ebs","opts":{}});
   $.data($("#item_elb")[0],"props",{"key":"elb","opts":{}});
 

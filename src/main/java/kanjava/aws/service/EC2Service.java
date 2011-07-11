@@ -67,6 +67,27 @@ public class EC2Service extends AbstractAWSService {
 	}
 
 	/**
+	 * 指定されたインスタンスの詳細情報を取得する
+	 * 
+	 * @param instanceId
+	 * @return
+	 */
+	public Instance getInstance(String instanceId) {
+		DescribeInstancesRequest request = new DescribeInstancesRequest()
+				.withInstanceIds(instanceId);
+		DescribeInstancesResult result = ec2.describeInstances(request);
+		List<Reservation> reservations = result.getReservations();
+		if (reservations.size() == 0) {
+			return null;
+		}
+		List<Instance> instances = reservations.get(0).getInstances();
+		if (instances.size() == 0) {
+			return null;
+		}
+		return instances.get(0);
+	}
+
+	/**
 	 * インスタンスを生成する
 	 * 
 	 * @param imageId

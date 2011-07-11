@@ -40,7 +40,6 @@ public class Utils {
 			buf.append(val.toString() + joinStr);
 		}
 		return buf.toString();
-
 	}
 
 }

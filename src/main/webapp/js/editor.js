@@ -11,16 +11,16 @@
 	// jQuery の Event オブジェクトのプロパティとして dataTransfer にアクセス出来るようにする
 	jQuery.event.props.push("dataTransfer");
 
-	var CloudEditor = function(canvas,basePath) {
-		return setupContext(canvas,basePath);
+	var CloudEditor = function(canvas, basePath) {
+		return setupContext(canvas, basePath);
 	};
 	CloudEditor.VERSION = "0.0.1";
 
 	root.CloudEditor = CloudEditor;
 
-	var setupContext = function(canvas,basePath) {
+	var setupContext = function(canvas, basePath) {
 
-		var ctx = new Context(canvas,basePath), j$canvas = $(canvas);
+		var ctx = new Context(canvas, basePath), j$canvas = $(canvas);
 
 		j$canvas.mousedown(function(evt) {
 			if (ctx.state) {
@@ -79,7 +79,7 @@
 		this.drawer = new Drawer(canvas);
 
 		this.manager = new ControllerManager(basePath);
-		this.manager.register("instance", InstanceController);
+		this.manager.register("ec2", EC2Controller);
 		this.manager.register("ebs", EBSController);
 		this.manager.register("elb", ELBController);
 		this.manager.register("connect", ConnectController);
@@ -164,10 +164,10 @@
 			}
 			view.drawSelect(this.g);
 		},
-		getCacheImage : function(x,y,w,h){
+		getCacheImage : function(x, y, w, h) {
 			var g = this.g;
-			var src = g.getImageData(x,y,w,h);
-			return Filter(g,src).blur();
+			var src = g.getImageData(x, y, w, h);
+			return Filter(g, src).blur();
 		},
 		bind : function(evtType, listener) {
 			this.j$canvas.bind(evtType, listener);
@@ -177,13 +177,14 @@
 	var ControllerManager = function(basePath) {
 		this.factory = {};
 		this.controllers = {};
-		this.basePath = basePath || "/";
+		this.basePath = basePath || "";
 	};
 
 	ControllerManager.prototype = {
 		create : function(view, opts) {
 			var constructor = this.factory[view.key];
 			var controller = new constructor(view, opts);
+			controller.manager = this;
 			this.controllers[view.id] = controller;
 			return controller;
 		},
@@ -195,6 +196,16 @@
 		},
 		register : function(key, constructor) {
 			this.factory[key] = constructor;
+		},
+		ajax : function(path, settings) {
+			_.defaults(settings, {
+				dataType : "json",
+				error : function(data) {
+					console.log("------ error -----");
+					console.log(data);
+				}
+			});
+			$.ajax(this.basePath + path, settings);
 		}
 	};
 
@@ -302,7 +313,8 @@
 	_.extend(MoveState.prototype, State.prototype, {
 		start : function() {
 			var view = this.selected;
-			this.cache = this.ctx.drawer.getCacheImage(view.x,view.y,view.width,view.height);
+			this.cache = this.ctx.drawer.getCacheImage(view.x, view.y,
+					view.width, view.height);
 		},
 		onMouseUp : function(evt, x, y) {
 			var dx = x - this.startX;
@@ -545,21 +557,70 @@
 		onAdd : function() {
 		},
 		onRemove : function() {
+		},
+		onActive : function() {
+			// TODO: view 側に接続完了な処理を行う
+		},
+		ajax : function(path, settings) {
+			this.manager.ajax(path, settings);
 		}
 	};
 
-	var InstanceController = function(view, opts) {
+	var EC2Controller = function(view, opts) {
 		this.view = view;
 		this.opts = opts;
 		this.reset();
 	};
 
-	_.extend(InstanceController.prototype, Controller.prototype, {
+	_.extend(EC2Controller.prototype, Controller.prototype, {
 		onAdd : function() {
-			console.log("create instance ... AMI[" + this.opts["type"] + "]");
+			var path = "/api/ec2/run/" + this.opts["type"];
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					this.model = data;
+					this._delayReload(0);
+				}
+			});
 		},
 		onRemove : function() {
-			console.log("remove instance ...");
+			if (this.model == null) {
+				return;
+			}
+			var path = "/api/ec2/terminate/" + this.model.instanceId;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					this.model = null;
+				}
+			});
+		},
+		_reload : function(count) {
+			if (this.model == null || this.model.instanceId == null
+					|| this.model.state.code == 16) {
+				return;
+			}
+			if (count == 6) {
+				console.log("retry count reached maxium.");
+				return;
+			}
+			var path = "/api/ec2/instance/" + this.model.instanceId;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					this.model = data;
+					if (this.model.state.code != 16) {
+						count++;
+						this._delayReload(count);
+					} else {
+						this.onActive();
+					}
+				}
+			});
+		},
+		_delayReload : function(count) {
+			var reload = _.bind(this._reload, this);
+			_.delay(reload, 10000, count);
 		}
 	});
 
@@ -571,10 +632,28 @@
 
 	_.extend(EBSController.prototype, Controller.prototype, {
 		onAdd : function() {
-			console.log("create EBS volume ...");
+			var path = "/api/ebs/create";
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					console.log(data);
+					this.model = data;
+					this.onActive();
+				}
+			});
 		},
 		onRemove : function() {
-			console.log("remove EBS volume...");
+			if (this.model == null) {
+				return;
+			}
+			var path = "/api/ebs/delete/" + this.model.volumeId;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					console.log(data);
+					this.model = null;
+				}
+			});
 		}
 	});
 
@@ -586,10 +665,28 @@
 
 	_.extend(ELBController.prototype, Controller.prototype, {
 		onAdd : function() {
-			console.log("create ELB ...");
+			var path = "/api/elb/create/" + this.view.id;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					console.log(data);
+					this.model = data;
+					this.onActive();
+				}
+			});
 		},
 		onRemove : function() {
-			console.log("remove ELB ...");
+			if (this.model == null) {
+				return;
+			}
+			var path = "/api/elb/delete/" + this.model.name;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					console.log(data);
+					this.model = null;
+				}
+			});
 		}
 	});
 
@@ -598,7 +695,14 @@
 		this.reset();
 	};
 
-	_.extend(ConnectController.prototype, Controller.prototype, {});
+	_.extend(ConnectController.prototype, Controller.prototype, {
+		onAdd : function(){
+			
+		},
+		onRemove : function(){
+			
+		}
+	});
 
 	var Line = function(a, b, c) {
 		this.a = a || 0;
