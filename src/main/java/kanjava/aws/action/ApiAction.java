@@ -85,13 +85,19 @@ public class ApiAction {
 		return new Json(volume);
 	}
 
-	@Path("ebs/delete/{volumeId,v-[a-zA-Z0-9]+}")
+	@Path("ebs/volume/{volumeId,vol-[a-zA-Z0-9]+}")
+	public ActionResult getVolume() {
+		Volume volume = ec2Service.getVolume(volumeId);
+		return new Json(volume);
+	}
+
+	@Path("ebs/delete/{volumeId,vol-[a-zA-Z0-9]+}")
 	public ActionResult deleteVolume() {
 		ec2Service.deleteVolume(volumeId);
 		return new Json(new Object());
 	}
 
-	@Path("elb/create/{elbName,[a-zA-Z0-9\\-]+}")
+	@Path("elb/create/{elbName,elb-[a-zA-Z0-9\\-]+}")
 	public ActionResult createLoadBalancer() {
 		String dnsName = elbService.createLoadBalancer(elbName);
 		Map<String, String> ret = newHashMap();
@@ -100,7 +106,7 @@ public class ApiAction {
 		return new Json(ret);
 	}
 
-	@Path("elb/delete/{elbName,[a-zA-Z0-9\\-]+}")
+	@Path("elb/delete/{elbName,elb-[a-zA-Z0-9\\-]+}")
 	public ActionResult deleteLoadBalancer() {
 		elbService.deleteLoadBalancer(elbName);
 		return new Json(new Object());

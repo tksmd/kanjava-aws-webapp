@@ -29,7 +29,7 @@ public class Utils {
 	}
 
 	public static final <T> String join(Collection<T> col, String joinStr) {
-		if (col == null || col.size() == 0) {
+		if (isEmpty(col)) {
 			return null;
 		}
 		if (joinStr == null) {
@@ -41,5 +41,10 @@ public class Utils {
 		}
 		return buf.toString();
 	}
+	
+	public static final <T> boolean isEmpty(Collection<T> col){
+		return (col == null || col.size() == 0);
+	}
+	
 
 }

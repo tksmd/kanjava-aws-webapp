@@ -5,6 +5,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import java.util.ArrayList;
 import java.util.List;
 
+import kanjava.aws.Utils;
+
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeResult;
@@ -14,6 +16,8 @@ import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
 import com.amazonaws.services.ec2.model.DetachVolumeRequest;
 import com.amazonaws.services.ec2.model.DetachVolumeResult;
 import com.amazonaws.services.ec2.model.Filter;
@@ -77,11 +81,11 @@ public class EC2Service extends AbstractAWSService {
 				.withInstanceIds(instanceId);
 		DescribeInstancesResult result = ec2.describeInstances(request);
 		List<Reservation> reservations = result.getReservations();
-		if (reservations.size() == 0) {
+		if (Utils.isEmpty(reservations)) {
 			return null;
 		}
 		List<Instance> instances = reservations.get(0).getInstances();
-		if (instances.size() == 0) {
+		if (Utils.isEmpty(instances)) {
 			return null;
 		}
 		return instances.get(0);
@@ -129,6 +133,23 @@ public class EC2Service extends AbstractAWSService {
 				availabilityZone).withSize(1);
 		CreateVolumeResult result = ec2.createVolume(request);
 		return result.getVolume();
+	}
+
+	/**
+	 * EBS の情報を取得する
+	 * 
+	 * @param volumeId
+	 * @return
+	 */
+	public Volume getVolume(String volumeId) {
+		DescribeVolumesRequest request = new DescribeVolumesRequest()
+				.withVolumeIds(volumeId);
+		DescribeVolumesResult result = ec2.describeVolumes(request);
+		List<Volume> volumes = result.getVolumes();
+		if (Utils.isEmpty(volumes)) {
+			return null;
+		}
+		return volumes.get(0);
 	}
 
 	/**

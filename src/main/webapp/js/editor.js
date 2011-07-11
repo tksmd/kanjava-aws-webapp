@@ -108,15 +108,18 @@
 		},
 		_bind : function() {
 			var self = this;
-			this.drawer.bind("addView", function(evt, view, opts) {
+			this.drawer.bind("viewAdded", function(evt, view, opts) {
 				var controller = self.manager.create(view, opts);
 				controller.onAdd();
 			});
-			this.drawer.bind("removeView", function(evt, view) {
+			this.drawer.bind("viewRemoved", function(evt, view) {
 				var controller = self.manager.find(view);
 				controller.onRemove();
 				self.manager.remove(view);
 			});
+			this.manager.bind("modelActivated",function(evt,model){
+				self.drawer.refresh();
+			});			
 		}
 	};
 
@@ -135,6 +138,9 @@
 			g.clearRect(0, 0, this.width, this.height);
 			_.each(this.views, function(v) {
 				v.draw(g);
+				if(v.active){
+					v.drawActive(g);
+				}
 			});
 			if (this.state) {
 				this.state.draw(g);
@@ -143,14 +149,14 @@
 		add : function(view, opts) {
 			this.views.push(view);
 			this.refresh();
-			this.j$canvas.trigger("addView", [ view, opts ]);
+			this.j$canvas.trigger("viewAdded", [ view, opts ]);
 		},
 		remove : function(view) {
 			this.views = _.reject(this.views, function(v) {
 				return v.id == view.id;
 			});
 			this.refresh();
-			this.j$canvas.trigger("removeView", [ view ]);
+			this.j$canvas.trigger("viewRemoved", [ view ]);
 		},
 		find : function(x, y) {
 			return _.detect(this.views, function(v) {
@@ -201,12 +207,18 @@
 			_.defaults(settings, {
 				dataType : "json",
 				error : function(data) {
-					console.log("------ error -----");
+					console.log("------> ajax error");
 					console.log(data);
 				}
 			});
 			$.ajax(this.basePath + path, settings);
-		}
+		},
+		trigger : function(evtType,args){
+			$(document.body).trigger(evtType,args);
+		},
+		bind : function(evtType, listener) {
+			$(document.body).bind(evtType, listener);
+		}		
 	};
 
 	/** CloudEditor states */
@@ -431,7 +443,7 @@
 			this.y = 0;
 			this.width = 0;
 			this.height = 0;
-			this.delay = 0;
+			this.active = false;
 			this.id = _.uniqueId("view");
 		},
 		move : function(dx, dy) {
@@ -440,22 +452,34 @@
 		},
 		draw : function(g) {
 		},
-		drawSelect : function(g) {
-			if (this.width == 0 && this.height == 0) {
-				if (this.delay == 3) {
-					console.log("3 times called,  give up...");
-					return;
-				}
-				this.delay += 1;
-				var func = _.bind(arguments.callee, this);
-				_.delay(func, 200, g);
+		_delayDraw : function(func, g, count){
+			var count = count || 0; 			
+			if (count == 3) {
+				console.log("3 times called,  give up...");
 				return;
 			}
-			g.fillStyle = 'rgb(155, 187, 89)';
+			count++;			
+			var f = _.bind(func,this);
+			_.delay(f,200,g,count);			
+		},
+		drawSelect : function(g, count) {
+			if (this.width == 0 && this.height == 0) {
+				this._delayDraw(arguments.callee, g, count);
+				return;
+			}
+			g.fillStyle = 'rgba(155, 187, 89, 0.8)';
 			_.each(this._bounds(), function(p) {
 				g.fillRect(p.x - 4, p.y - 4, 8, 8);
 			});
 		},
+		drawActive : function(g, count){
+			if (this.width == 0 && this.height == 0) {
+				this._delayDraw(arguments.callee, g, count);
+				return;
+			}
+			g.fillStyle = 'rgba(192, 80, 77, 0.2)';
+			g.fillRect(this.x,this.y,this.width,this.height);
+		},		
 		_bounds : function() {
 			return [ new Point(this.x, this.y),
 					new Point(this.x + this.width, this.y),
@@ -559,10 +583,15 @@
 		onRemove : function() {
 		},
 		onActive : function() {
-			// TODO: view 側に接続完了な処理を行う
+			this.view.active = true;
+			this.manager.trigger("modelActivated", [ this.model ]);
 		},
 		ajax : function(path, settings) {
 			this.manager.ajax(path, settings);
+		},
+		delay : function(func,arg,millis){
+			var f = _.bind(func,this), millis = millis || 10000;
+			_.delay(f,millis,arg);
 		}
 	};
 
@@ -579,7 +608,7 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					this._delayReload(0);
+					this.delay(this._reload,0);
 				}
 			});
 		},
@@ -611,16 +640,12 @@
 					this.model = data;
 					if (this.model.state.code != 16) {
 						count++;
-						this._delayReload(count);
+						this.delay(this._reload,count);
 					} else {
 						this.onActive();
 					}
 				}
 			});
-		},
-		_delayReload : function(count) {
-			var reload = _.bind(this._reload, this);
-			_.delay(reload, 10000, count);
 		}
 	});
 
@@ -636,9 +661,8 @@
 			this.ajax(path, {
 				context : this,
 				success : function(data) {
-					console.log(data);
 					this.model = data;
-					this.onActive();
+					this.delay(this._reload,0,5000);					
 				}
 			});
 		},
@@ -650,11 +674,33 @@
 			this.ajax(path, {
 				context : this,
 				success : function(data) {
-					console.log(data);
 					this.model = null;
 				}
 			});
-		}
+		},
+		_reload : function(count) {
+			if (this.model == null || this.model.volumeId == null
+					|| this.model.state == "available") {
+				return;
+			}
+			if (count == 6) {
+				console.log("retry count reached maxium.");
+				return;
+			}
+			var path = "/api/ebs/volume/" + this.model.volumeId;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					this.model = data;
+					if (this.model.state != "available") {
+						count++;
+						this.delay(this._reload,count,5000);
+					} else {
+						this.onActive();
+					}
+				}
+			});
+		}		
 	});
 
 	var ELBController = function(view, opts) {
@@ -665,11 +711,10 @@
 
 	_.extend(ELBController.prototype, Controller.prototype, {
 		onAdd : function() {
-			var path = "/api/elb/create/" + this.view.id;
+			var path = "/api/elb/create/elb-" + this.view.id;
 			this.ajax(path, {
 				context : this,
 				success : function(data) {
-					console.log(data);
 					this.model = data;
 					this.onActive();
 				}
@@ -683,7 +728,6 @@
 			this.ajax(path, {
 				context : this,
 				success : function(data) {
-					console.log(data);
 					this.model = null;
 				}
 			});

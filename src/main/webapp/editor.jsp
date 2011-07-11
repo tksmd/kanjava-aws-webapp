@@ -6,7 +6,8 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta http-equiv="Content-Script-Type" content="text/JavaScript" />
   <link href="${contextPath}/css/default.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
-  <link href="${contextPath}/css/editor.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />  
+  <link href="${contextPath}/css/editor.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
+  <link href="${contextPath}/css/humanity/jquery-ui-1.8.14.custom.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />    
   <title>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</title>
 </head>
 <body>
@@ -27,6 +28,7 @@
 </div>
 
 <script type="text/javascript" src="${contextPath }/js/jquery-1.6.1.js"></script>
+<script type="text/javascript" src="${contextPath }/js/jquery-ui-1.8.14.custom.js"></script>
 <script type="text/javascript" src="${contextPath }/js/underscore.js"></script>
 <script type="text/javascript" src="${contextPath }/js/editor.js"></script>
 <script type="text/javascript" src="${contextPath }/js/filter.js"></script>
