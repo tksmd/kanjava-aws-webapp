@@ -27,6 +27,8 @@
 </canvas>
 </div>
 
+<div id="dialog"></div>
+
 <script type="text/javascript" src="${contextPath }/js/jquery-1.6.1.js"></script>
 <script type="text/javascript" src="${contextPath }/js/jquery-ui-1.8.14.custom.js"></script>
 <script type="text/javascript" src="${contextPath }/js/underscore.js"></script>
@@ -45,6 +47,7 @@ jQuery(function($){
 
   // create editor
   var editor = CloudEditor($("#editor")[0],basePath);
+  editor.setDialog($("#dialog"));
 
   $("ul#item li img.view").bind("dragstart",function(evt){
     editor.dragItem(evt);
@@ -58,7 +61,7 @@ jQuery(function($){
   $("input#connect").click(function(){
     editor.startConnect();
   });
-
+  
 });
 </script>
 

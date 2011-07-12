@@ -2,6 +2,7 @@
  * editor.js implements CloudEditor
  * 
  * @require jQuery 1.6.1 or later
+ * @require jQuery UI 1.8.14 or later
  * @require underscore.js 1.1.6 or later
  * @require filter.js 0.0.1
  */
@@ -48,7 +49,7 @@
 
 		j$canvas.dblclick(function(evt) {
 			if (ctx.state) {
-				ctx.state.onDoubleClick(evt);
+				ctx.state.onDoubleClick(evt, evt.offsetX, evt.offsetY);
 			}
 		});
 
@@ -77,6 +78,7 @@
 	/** Context Object for maintain CloudEditor state */
 	var Context = function(canvas, basePath) {
 		this.drawer = new Drawer(canvas);
+		this.j$canvas = $(canvas);
 
 		this.manager = new ControllerManager(basePath);
 		this.manager.register("ec2", EC2Controller);
@@ -106,6 +108,15 @@
 		startConnect : function() {
 			this.transit(new ConnectStartState(this));
 		},
+		setDialog : function(dialog){
+			this.dialog = dialog.dialog({				
+				autoOpen : false,
+				modal : true,
+				resizable : false,
+				width : 300,
+				height: 300
+			});
+		},
 		_bind : function() {
 			var self = this;
 			this.drawer.bind("viewAdded", function(evt, view, opts) {
@@ -120,6 +131,14 @@
 			this.manager.bind("modelActivated",function(evt,model){
 				self.drawer.refresh();
 			});			
+		},
+		_showDialog : function(view,x,y){
+			if(this.dialog == null){
+				return;
+			}
+			var controller = this.manager.find(view);	
+			var offset = this.j$canvas.offset();
+			controller.showDialog(this.dialog,x + offset.left,y + offset.top - 300);
 		}
 	};
 
@@ -234,7 +253,7 @@
 		},
 		onClick : function(evt) {
 		},
-		onDoubleClick : function(evt) {
+		onDoubleClick : function(evt,x,y) {
 		},
 		onMouseDown : function(evt, x, y) {
 		},
@@ -274,6 +293,9 @@
 	_.extend(SelectedState.prototype, State.prototype, {
 		start : function() {
 			this.ctx.drawer.select(this.selected);
+		},
+		onDoubleClick : function(evt, x , y){
+			this.ctx._showDialog(this.selected,x,y);
 		},
 		onMouseDown : function(evt, x, y) {
 			var view = this.ctx.drawer.find(x, y);
@@ -592,12 +614,29 @@
 		delay : function(func,arg,millis){
 			var f = _.bind(func,this), millis = millis || 10000;
 			_.delay(f,millis,arg);
+		},
+		showDialog : function(dialog,x,y){
+			if(!this.view.active){
+				return;
+			}
+			dialog.dialog("option",{
+				"position":[x,y],
+				"title": this.dialogTitle
+			});
+			this.renderModel(dialog);
+			dialog.dialog("open");
+		},
+		renderModel : function(dialog){
+			var tr = "<% _.each(model, function(value, key) { %> <tr><td><%= key %></td><td><%= value %></td></tr> <% }); %>";
+			var compiled = _.template(tr);
+			dialog.html("<table>" + compiled({"model" : this.model}) + "</table>");			
 		}
 	};
 
 	var EC2Controller = function(view, opts) {
 		this.view = view;
 		this.opts = opts;
+		this.dialogTitle = "EC2 インスタンス";
 		this.reset();
 	};
 
@@ -608,7 +647,7 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					this.delay(this._reload,0);
+					this.delay(this._reload,0,8000);
 				}
 			});
 		},
@@ -640,7 +679,7 @@
 					this.model = data;
 					if (this.model.state.code != 16) {
 						count++;
-						this.delay(this._reload,count);
+						this.delay(this._reload,count,8000);
 					} else {
 						this.onActive();
 					}
@@ -652,6 +691,7 @@
 	var EBSController = function(view, opts) {
 		this.view = view;
 		this.opts = opts;
+		this.dialogTitle = "EBS ボリューム";		
 		this.reset();
 	};
 
@@ -706,6 +746,7 @@
 	var ELBController = function(view, opts) {
 		this.view = view;
 		this.opts = opts;
+		this.dialogTitle = "ELB";
 		this.reset();
 	};
 
@@ -731,11 +772,12 @@
 					this.model = null;
 				}
 			});
-		}
+		}		
 	});
 
 	var ConnectController = function(view) {
-		this.view = view;
+		this.view = view;		
+		this.dialogTitle = "";
 		this.reset();
 	};
 

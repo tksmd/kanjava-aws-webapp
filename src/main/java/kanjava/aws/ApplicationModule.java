@@ -17,7 +17,6 @@
 package kanjava.aws;
 
 import kanjava.aws.action.ApiAction;
-import kanjava.aws.action.HelloAction;
 import kanjava.aws.action.IndexAction;
 import net.sf.oval.localization.context.OValContextRenderer;
 import net.sf.oval.localization.message.MessageResolver;
@@ -40,7 +39,6 @@ public class ApplicationModule extends AbstractModule {
 		install(new AWSModule());
 
 		bind(IndexAction.class);
-		bind(HelloAction.class);
 		bind(ApiAction.class);
 
 		configureOVal();
