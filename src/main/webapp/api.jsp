@@ -27,7 +27,7 @@ var basePath = "${contextPath}";
 jQuery(function($){
 	$("#ec2runbtn").click(function(){
 		$.ajax(basePath + "/api/ec2/run/tomcat",{
-			typs : "json",
+			dataType : "json",
 			success : function(data){
 				console.log(data);
 			}
