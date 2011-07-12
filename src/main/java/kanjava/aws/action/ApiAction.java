@@ -2,6 +2,7 @@ package kanjava.aws.action;
 
 import static com.google.common.collect.Maps.*;
 
+import java.util.List;
 import java.util.Map;
 
 import kanjava.aws.service.EC2Service;
@@ -17,6 +18,7 @@ import org.seasar.cubby.action.RequestParameter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.ec2.model.VolumeAttachment;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.inject.servlet.RequestScoped;
@@ -47,6 +49,9 @@ public class ApiAction {
 
 	@RequestParameter
 	private String volumeId;
+
+	@RequestParameter
+	private String device;
 
 	@RequestParameter
 	private String elbName;
@@ -97,6 +102,19 @@ public class ApiAction {
 		return new Json(new Object());
 	}
 
+	@Path("ebs/attach/{volumeId,vol-[a-zA-Z0-9]+}")
+	public ActionResult attachVolume() {
+		VolumeAttachment attachment = ec2Service.attachVolume(instanceId,
+				volumeId, device);
+		return new Json(attachment);
+	}
+
+	@Path("ebs/detach/{volumeId,vol-[a-zA-Z0-9]+}")
+	public ActionResult detachVolume() {
+		VolumeAttachment attachment = ec2Service.detachVolume(volumeId);
+		return new Json(attachment);
+	}
+
 	@Path("elb/create/{elbName,elb-[a-zA-Z0-9\\-]+}")
 	public ActionResult createLoadBalancer() {
 		String dnsName = elbService.createLoadBalancer(elbName);
@@ -110,6 +128,13 @@ public class ApiAction {
 	public ActionResult deleteLoadBalancer() {
 		elbService.deleteLoadBalancer(elbName);
 		return new Json(new Object());
+	}
+
+	@Path("elb/register/{elbName,elb-[a-zA-Z0-9\\-]+}")
+	public ActionResult registerInstance() {
+		List<com.amazonaws.services.elasticloadbalancing.model.Instance> instances = elbService
+				.registerInstanceWithLoadBalancer(elbName, instanceId);
+		return new Json(instances);
 	}
 
 }
