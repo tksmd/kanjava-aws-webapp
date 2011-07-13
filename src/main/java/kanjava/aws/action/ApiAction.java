@@ -14,6 +14,8 @@ import org.seasar.cubby.action.Forward;
 import org.seasar.cubby.action.Json;
 import org.seasar.cubby.action.Path;
 import org.seasar.cubby.action.RequestParameter;
+import org.seasar.cubby.action.Validation;
+import org.seasar.cubby.validator.ValidationRules;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
@@ -55,6 +57,19 @@ public class ApiAction {
 
 	@RequestParameter
 	private String elbName;
+
+	public ValidationRules ebsAttachRules = new BaseValidationRules() {
+		protected void initialize() {
+			add("instanceId", required());
+			add("device", required());
+		};
+	};
+
+	public ValidationRules elbRegisterRules = new BaseValidationRules() {
+		protected void initialize() {
+			add("instanceId", required());
+		};
+	};
 
 	public ActionResult index() {
 		return new Forward("/api.jsp");
@@ -103,6 +118,7 @@ public class ApiAction {
 	}
 
 	@Path("ebs/attach/{volumeId,vol-[a-zA-Z0-9]+}")
+	@Validation(rules = "ebsAttachRules")
 	public ActionResult attachVolume() {
 		VolumeAttachment attachment = ec2Service.attachVolume(instanceId,
 				volumeId, device);
@@ -131,9 +147,18 @@ public class ApiAction {
 	}
 
 	@Path("elb/register/{elbName,elb-[a-zA-Z0-9\\-]+}")
+	@Validation(rules = "elbRegisterRules")
 	public ActionResult registerInstance() {
 		List<com.amazonaws.services.elasticloadbalancing.model.Instance> instances = elbService
 				.registerInstanceWithLoadBalancer(elbName, instanceId);
+		return new Json(instances);
+	}
+
+	@Path("elb/deregister/{elbName,elb-[a-zA-Z0-9\\-]+}")
+	@Validation(rules = "elbRegisterRules")
+	public ActionResult deregisterInstance() {
+		List<com.amazonaws.services.elasticloadbalancing.model.Instance> instances = elbService
+				.deregisterInstanceWithLoadBalancer(elbName, instanceId);
 		return new Json(instances);
 	}
 

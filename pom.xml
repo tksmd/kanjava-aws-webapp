@@ -230,6 +230,12 @@ line.separator=\n
 			<artifactId>twitter4j-core</artifactId>
 			<version>[2.2,)</version>
 		</dependency>
+		<dependency>
+			<groupId>org.easymock</groupId>
+			<artifactId>easymock</artifactId>
+			<version>3.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<profiles>
 		<profile>
@@ -288,7 +294,7 @@ line.separator=\n
 											<fileset dir="${basedir}">
 												<include name="dotcloud.yml" />
 												<include name="target/ROOT.war" />
-												<include name="src/production/config/realm.properties"/>
+												<include name="src/production/config/realm.properties" />
 											</fileset>
 										</copy>
 									</tasks>

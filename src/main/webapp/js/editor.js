@@ -108,13 +108,13 @@
 		startConnect : function() {
 			this.transit(new ConnectStartState(this));
 		},
-		setDialog : function(dialog){
-			this.dialog = dialog.dialog({				
+		setDialog : function(dialog) {
+			this.dialog = dialog.dialog({
 				autoOpen : false,
 				modal : true,
 				resizable : false,
 				width : 300,
-				height: 300
+				height : 300
 			});
 		},
 		_bind : function() {
@@ -128,17 +128,22 @@
 				controller.onRemove();
 				self.manager.remove(view);
 			});
-			this.manager.bind("modelActivated",function(evt,model){
+			this.manager.bind("modelActivated", function(evt, model) {
 				self.drawer.refresh();
-			});			
+			});
+			this.manager.bind("viewInvalidated", function(evt, view) {
+				// イベントがループしないように
+				self.drawer.remove(view, true);
+			});
 		},
-		_showDialog : function(view,x,y){
-			if(this.dialog == null){
+		_showDialog : function(view, x, y) {
+			if (this.dialog == null) {
 				return;
 			}
-			var controller = this.manager.find(view);	
+			var controller = this.manager.find(view);
 			var offset = this.j$canvas.offset();
-			controller.showDialog(this.dialog,x + offset.left,y + offset.top - 300);
+			controller.showDialog(this.dialog, x + offset.left, y + offset.top
+					- 300);
 		}
 	};
 
@@ -157,7 +162,7 @@
 			g.clearRect(0, 0, this.width, this.height);
 			_.each(this.views, function(v) {
 				v.draw(g);
-				if(v.active){
+				if (v.active) {
 					v.drawActive(g);
 				}
 			});
@@ -170,12 +175,15 @@
 			this.refresh();
 			this.j$canvas.trigger("viewAdded", [ view, opts ]);
 		},
-		remove : function(view) {
+		remove : function(view, suppress) {
+			var suppress = suppress || false;
 			this.views = _.reject(this.views, function(v) {
 				return v.id == view.id;
 			});
 			this.refresh();
-			this.j$canvas.trigger("viewRemoved", [ view ]);
+			if (!suppress) {
+				this.j$canvas.trigger("viewRemoved", [ view ]);
+			}
 		},
 		find : function(x, y) {
 			return _.detect(this.views, function(v) {
@@ -232,12 +240,12 @@
 			});
 			$.ajax(this.basePath + path, settings);
 		},
-		trigger : function(evtType,args){
-			$(document.body).trigger(evtType,args);
+		trigger : function(evtType, args) {
+			$(document.body).trigger(evtType, args);
 		},
 		bind : function(evtType, listener) {
 			$(document.body).bind(evtType, listener);
-		}		
+		}
 	};
 
 	/** CloudEditor states */
@@ -253,7 +261,7 @@
 		},
 		onClick : function(evt) {
 		},
-		onDoubleClick : function(evt,x,y) {
+		onDoubleClick : function(evt, x, y) {
 		},
 		onMouseDown : function(evt, x, y) {
 		},
@@ -294,8 +302,8 @@
 		start : function() {
 			this.ctx.drawer.select(this.selected);
 		},
-		onDoubleClick : function(evt, x , y){
-			this.ctx._showDialog(this.selected,x,y);
+		onDoubleClick : function(evt, x, y) {
+			this.ctx._showDialog(this.selected, x, y);
 		},
 		onMouseDown : function(evt, x, y) {
 			var view = this.ctx.drawer.find(x, y);
@@ -427,7 +435,7 @@
 		onMouseUp : function(evt, x, y) {
 			var to = this.ctx.drawer.find(x, y);
 			if (to) {
-				if (this.from.id != to.id) { // TODO: connectable
+				if (this._connectable(this.from, to)) {
 					var view = new ConnectView(this.from, to);
 					this.ctx.drawer.add(view);
 				}
@@ -452,6 +460,11 @@
 			g.moveTo(pair.start.x, pair.start.y);
 			g.lineTo(pair.end.x, pair.end.y);
 			g.stroke();
+		},
+		_connectable : function(from, to) {
+			// 双方異なっていて、かつアクティブであること
+			// これ以上の複雑な条件判定はコントローラ側で行う
+			return from.id != to.id && from.active && to.active;
 		}
 	});
 
@@ -474,15 +487,15 @@
 		},
 		draw : function(g) {
 		},
-		_delayDraw : function(func, g, count){
-			var count = count || 0; 			
+		_delayDraw : function(func, g, count) {
+			var count = count || 0;
 			if (count == 3) {
 				console.log("3 times called,  give up...");
 				return;
 			}
-			count++;			
-			var f = _.bind(func,this);
-			_.delay(f,200,g,count);			
+			count++;
+			var f = _.bind(func, this);
+			_.delay(f, 200, g, count);
 		},
 		drawSelect : function(g, count) {
 			if (this.width == 0 && this.height == 0) {
@@ -494,14 +507,14 @@
 				g.fillRect(p.x - 4, p.y - 4, 8, 8);
 			});
 		},
-		drawActive : function(g, count){
+		drawActive : function(g, count) {
 			if (this.width == 0 && this.height == 0) {
 				this._delayDraw(arguments.callee, g, count);
 				return;
 			}
 			g.fillStyle = 'rgba(192, 80, 77, 0.2)';
-			g.fillRect(this.x,this.y,this.width,this.height);
-		},		
+			g.fillRect(this.x, this.y, this.width, this.height);
+		},
 		_bounds : function() {
 			return [ new Point(this.x, this.y),
 					new Point(this.x + this.width, this.y),
@@ -536,6 +549,7 @@
 		this.src = src;
 		this.key = key;
 		this.loaded = null;
+		this.connectable = true;
 		this.reset();
 	};
 
@@ -599,6 +613,7 @@
 	Controller.prototype = {
 		reset : function() {
 			this.id = _.uniqueId("controller");
+			this.connections = [];
 		},
 		onAdd : function() {
 		},
@@ -609,27 +624,30 @@
 			this.manager.trigger("modelActivated", [ this.model ]);
 		},
 		ajax : function(path, settings) {
-			this.manager.ajax(path, settings);
+			console.log("api call to ---> " + path);
+			// this.manager.ajax(path, settings);
 		},
-		delay : function(func,arg,millis){
-			var f = _.bind(func,this), millis = millis || 10000;
-			_.delay(f,millis,arg);
+		delay : function(func, arg, millis) {
+			var f = _.bind(func, this), millis = millis || 10000;
+			_.delay(f, millis, arg);
 		},
-		showDialog : function(dialog,x,y){
-			if(!this.view.active){
+		showDialog : function(dialog, x, y) {
+			if (!this.view.active) {
 				return;
 			}
-			dialog.dialog("option",{
-				"position":[x,y],
-				"title": this.dialogTitle
+			dialog.dialog("option", {
+				"position" : [ x, y ],
+				"title" : this.dialogTitle
 			});
 			this.renderModel(dialog);
 			dialog.dialog("open");
 		},
-		renderModel : function(dialog){
+		renderModel : function(dialog) {
 			var tr = "<% _.each(model, function(value, key) { %> <tr><td><%= key %></td><td><%= value %></td></tr> <% }); %>";
 			var compiled = _.template(tr);
-			dialog.html("<table>" + compiled({"model" : this.model}) + "</table>");			
+			dialog.html("<table>" + compiled({
+				"model" : this.model
+			}) + "</table>");
 		}
 	};
 
@@ -637,6 +655,8 @@
 		this.view = view;
 		this.opts = opts;
 		this.dialogTitle = "EC2 インスタンス";
+		this.type = "ec2";
+		this.connectableTypes = [ "ebs", "elb" ];
 		this.reset();
 	};
 
@@ -647,7 +667,7 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					this.delay(this._reload,0,8000);
+					this.delay(this._reload, 0, 8000);
 				}
 			});
 		},
@@ -679,7 +699,7 @@
 					this.model = data;
 					if (this.model.state.code != 16) {
 						count++;
-						this.delay(this._reload,count,8000);
+						this.delay(this._reload, count, 8000);
 					} else {
 						this.onActive();
 					}
@@ -691,7 +711,9 @@
 	var EBSController = function(view, opts) {
 		this.view = view;
 		this.opts = opts;
-		this.dialogTitle = "EBS ボリューム";		
+		this.dialogTitle = "EBS ボリューム";
+		this.type = "ebs";
+		this.connectableTypes = [ "ec2" ];
 		this.reset();
 	};
 
@@ -702,7 +724,7 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					this.delay(this._reload,0,5000);					
+					this.delay(this._reload, 0, 5000);
 				}
 			});
 		},
@@ -734,19 +756,21 @@
 					this.model = data;
 					if (this.model.state != "available") {
 						count++;
-						this.delay(this._reload,count,5000);
+						this.delay(this._reload, count, 5000);
 					} else {
 						this.onActive();
 					}
 				}
 			});
-		}		
+		}
 	});
 
 	var ELBController = function(view, opts) {
 		this.view = view;
 		this.opts = opts;
 		this.dialogTitle = "ELB";
+		this.type = "elb";
+		this.connectableTypes = [ "ec2" ];
 		this.reset();
 	};
 
@@ -772,23 +796,75 @@
 					this.model = null;
 				}
 			});
-		}		
+		}
 	});
 
 	var ConnectController = function(view) {
-		this.view = view;		
+		this.view = view;
 		this.dialogTitle = "";
+		this.type = "connect";
+		this.connectableTypes = [];
 		this.reset();
 	};
 
 	_.extend(ConnectController.prototype, Controller.prototype, {
-		onAdd : function(){
-			
+		onAdd : function() {
+			var from = this.manager.find(this.view.from);
+			var to = this.manager.find(this.view.to);
+			var conn = Connection.create(from, to);
+			if (conn && conn.connectable()) {
+				this.model = conn;
+				conn.onAdd();
+			} else {
+				this.manager.trigger("viewInvalidated", view);
+			}
 		},
-		onRemove : function(){
-			
+		onRemove : function() {
+			if (this.model) {
+				this.model.onRemove();
+				this.model = null;
+			}
 		}
 	});
+
+	var Connection = function() {
+	}
+
+	Connection.prototype = {
+		connectable : function() {
+			return false;
+		},
+		onAdd : function(){			
+		},
+		onRemove : function(){			
+		}
+	}
+
+	Connection.create = function(a, b) {
+		if (!_.include(a.connectableTypes, b.type)
+				|| !_.include(b.connectableTypes, a.type)) {
+			return null;
+		}
+		if (a.type == "ebs" || b.type == "ebs") {
+			return new EBSConnection(a, b);
+		} else if (a.type == "elb" || b.type == "elb") {
+			return new ELBConnection(a, b);
+		}
+		return null;
+	}
+
+	var EBSConnection = function(a,b) {
+	}
+	
+	_.extend(EBSConnection.prototype, Connection.prototype, {		
+	});
+	
+	var ELBConnection = function(a,b) {
+	}
+	
+	_.extend(ELBConnection.prototype, Connection.prototype, {		
+	});	
+	
 
 	var Line = function(a, b, c) {
 		this.a = a || 0;
