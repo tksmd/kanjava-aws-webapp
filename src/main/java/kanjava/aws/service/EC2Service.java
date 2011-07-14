@@ -191,7 +191,7 @@ public class EC2Service extends AbstractAWSService {
 		if ("in-use".equals(volume.getState())) {
 			detachVolume(volumeId);
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 			}
 		}

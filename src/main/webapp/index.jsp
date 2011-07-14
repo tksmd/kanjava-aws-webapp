@@ -5,6 +5,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta http-equiv="Content-Script-Type" content="text/JavaScript" />
   <link href="${contextPath}/css/default.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
+  <link href="${contextPath}/css/vanilla-1.0.1.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />  
   <title>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</title>
 </head>
 <body>
@@ -13,7 +14,9 @@
 <ul>
   <li><a href="editor">エディタ</a></li>
   <li><a href="status">ステータス</a></li>
+<!--  
   <li><a href="api/">API</a></li>
+-->  
 <c:if test="${metadata.available }">
   <li><a href="metadata">メタデータ</a></li>  
 </c:if>  

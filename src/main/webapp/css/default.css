@@ -1,7 +1,34 @@
 .fieldError {
-	background-color:pink;
+	background-color: pink;
 }
 
 #errors {
-	color:red;	
+	color: red;
+}
+
+h2 {
+	padding-bottom: 12px;
+	border-bottom: 1px dotted #ddd;
+}
+
+table {
+	width:100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	-webkit-border-horizontal-spacing: 0px;
+	-webkit-border-vertical-spacing: 0px;
+}
+
+table, th, td{
+	vertical-align:middle;
+}
+
+th{
+	background: #D49768;
+	font-weight:bold;
+}
+
+th,td{
+	padding 4px 10px 4px 5px;
+	text-align:left;	
 }

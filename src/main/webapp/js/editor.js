@@ -113,8 +113,8 @@
 				autoOpen : false,
 				modal : true,
 				resizable : false,
-				width : 300,
-				height : 300
+				width : 480,
+				height : 360
 			});
 		},
 		_bind : function() {
@@ -153,7 +153,12 @@
 			}
 			var controller = this.manager.find(view);
 			var pos = this.j$canvas.offset();
-			controller.showDialog(this.dialog, x + pos.left, y + pos.top - 300);
+			controller.showDialog(this.dialog, x + pos.left, y + pos.top - 360);
+		},
+		cursorTo : function(to){
+			this.j$canvas.css({
+				cursor : to
+			});
 		}
 	};
 
@@ -293,6 +298,21 @@
 	_.extend(NormalState.prototype, State.prototype, {
 		start : function() {
 			this.ctx.drawer.select(null);
+			this.ctx.cursorTo("auto");			
+		},
+		onMouseMove : function(evt, x, y) {
+			var view = this.ctx.drawer.find(x, y);
+			if (view) {
+				this.ctx.cursorTo("pointer");				
+			} else {
+				this.ctx.cursorTo("auto");								
+			}
+		},		
+		onKeyDown : function(evt) {
+			if (evt.keyCode == 67) {
+				this.ctx.transit(new ConnectStartState(this.ctx));
+				evt.preventDefault();
+			}
 		},
 		onMouseDown : function(evt, x, y) {
 			var view = this.ctx.drawer.find(x, y);
@@ -312,12 +332,21 @@
 		start : function() {
 			this.ctx.drawer.select(this.selected);
 		},
+		onMouseMove : function(evt, x, y) {
+			var view = this.ctx.drawer.find(x, y);
+			if (view) {
+				this.ctx.cursorTo("pointer");				
+			} else {
+				this.ctx.cursorTo("auto");								
+			}
+		},		
 		onDoubleClick : function(evt, x, y) {
 			this.ctx._showDialog(this.selected, x, y);
 		},
 		onMouseDown : function(evt, x, y) {
 			var view = this.ctx.drawer.find(x, y);
 			if (view) {
+				this.ctx.cursorTo("pointer");				
 				if (view.id != this.selected.id) {
 					this.ctx.drawer.refresh();
 					this.ctx.transit(new SelectedState(this.ctx, view));
@@ -422,6 +451,10 @@
 	_.extend(ConnectStartState.prototype, State.prototype, {
 		start : function() {
 			this.ctx.drawer.select(null);
+			this.ctx.cursorTo("all-scroll");
+		},
+		end : function(){
+			this.ctx.cursorTo("auto");			
 		},
 		onMouseDown : function(evt, x, y) {
 			var view = this.ctx.drawer.find(x, y);

@@ -6,6 +6,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta http-equiv="Content-Script-Type" content="text/JavaScript" />
   <link href="${contextPath}/css/default.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
+  <link href="${contextPath}/css/vanilla-1.0.1.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />    
   <link href="${contextPath}/css/editor.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
   <link href="${contextPath}/css/humanity/jquery-ui-1.8.14.custom.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />    
   <title>関ジャバカンファレンス 2011 AWS ではじめる Programmable Cloud</title>
@@ -15,7 +16,9 @@
 <h2>Cloud Editor</h2>
 <div id="container">
 
+<!-- 
 <input type="button" id="connect" value="connect" />
+ -->
   
 <ul id="item">
 <li><img id="item_tomcat" src="${contextPath }/img/tomcat.png" class="view" draggable="true" /></li>

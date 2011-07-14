@@ -1,11 +1,11 @@
-body{
-  margin:0;
-  padding:0;
+#container{
+	margin:12px 48px;
 }
 
 #item{
   width:800px;
   padding:0;
+  margin-left:0;
   list-style:none;
   background-color:#ddd;
 }
@@ -15,7 +15,7 @@ body{
 }
 
 #item li.selected{
-  background-color:#fff;
+  background-color:#9bbb59;
 }
 
 #item li img{

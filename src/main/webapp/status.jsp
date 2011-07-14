@@ -5,6 +5,7 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta http-equiv="Content-Script-Type" content="text/JavaScript" />
   <link href="${contextPath}/css/default.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />
+  <link href="${contextPath}/css/vanilla-1.0.1.css" rel="stylesheet" type="text/css" media="screen,projection" charset="utf-8" />    
   <title>ステータス</title>
 </head>
 <body>
