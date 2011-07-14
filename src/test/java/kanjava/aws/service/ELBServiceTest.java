@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
+import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -23,7 +24,8 @@ public class ELBServiceTest {
 
 	@Test
 	public void createLoadBalancer1() throws Exception {
-		String actual = service.createLoadBalancer("test-load-balancer");
+		LoadBalancerDescription actual = service
+				.createLoadBalancer("test-load-balancer");
 		System.out.println(actual);
 	}
 

@@ -187,6 +187,14 @@ public class EC2Service extends AbstractAWSService {
 	 * @param volumeId
 	 */
 	public void deleteVolume(String volumeId) {
+		Volume volume = getVolume(volumeId);
+		if ("in-use".equals(volume.getState())) {
+			detachVolume(volumeId);
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+			}
+		}
 		DeleteVolumeRequest request = new DeleteVolumeRequest(volumeId);
 		ec2.deleteVolume(request);
 	}

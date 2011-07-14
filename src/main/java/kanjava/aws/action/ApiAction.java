@@ -1,9 +1,6 @@
 package kanjava.aws.action;
 
-import static com.google.common.collect.Maps.*;
-
 import java.util.List;
-import java.util.Map;
 
 import kanjava.aws.service.EC2Service;
 import kanjava.aws.service.ELBService;
@@ -21,6 +18,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.ec2.model.VolumeAttachment;
+import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.inject.servlet.RequestScoped;
@@ -133,11 +131,16 @@ public class ApiAction {
 
 	@Path("elb/create/{elbName,elb-[a-zA-Z0-9\\-]+}")
 	public ActionResult createLoadBalancer() {
-		String dnsName = elbService.createLoadBalancer(elbName);
-		Map<String, String> ret = newHashMap();
-		ret.put("name", elbName);
-		ret.put("dnsName", dnsName);
-		return new Json(ret);
+		LoadBalancerDescription loadBalancer = elbService
+				.createLoadBalancer(elbName);
+		return new Json(loadBalancer);
+	}
+
+	@Path("elb/balancer/{elbName,elb-[a-zA-Z0-9\\-]+}")
+	public ActionResult getLoadBalancer() {
+		LoadBalancerDescription loadBalancer = elbService
+				.getLoadBalancer(elbName);
+		return new Json(loadBalancer);
 	}
 
 	@Path("elb/delete/{elbName,elb-[a-zA-Z0-9\\-]+}")

@@ -124,9 +124,20 @@
 				controller.onAdd();
 			});
 			this.drawer.bind("viewRemoved", function(evt, view) {
-				var controller = self.manager.find(view);
+				var controller = self.manager.find(view), refresh = false;
 				controller.onRemove();
 				self.manager.remove(view);
+				
+				// connector を削除
+				_.each(controller.connections,function(connector){
+					self.manager.remove(connector.view);
+					self.drawer.remove(connector.view, true);
+					refresh = true;
+				});			
+				if(refresh){
+					var f = _.bind(self.drawer.refresh,self.drawer);
+					_.delay(f,1000);					
+				}				
 			});
 			this.manager.bind("modelActivated", function(evt, model) {
 				self.drawer.refresh();
@@ -141,9 +152,8 @@
 				return;
 			}
 			var controller = this.manager.find(view);
-			var offset = this.j$canvas.offset();
-			controller.showDialog(this.dialog, x + offset.left, y + offset.top
-					- 300);
+			var pos = this.j$canvas.offset();
+			controller.showDialog(this.dialog, x + pos.left, y + pos.top - 300);
 		}
 	};
 
@@ -620,12 +630,14 @@
 		onRemove : function() {
 		},
 		onActive : function() {
-			this.view.active = true;
-			this.manager.trigger("modelActivated", [ this.model ]);
+			// reload 時に既に active の状態で呼ばれることもあるため
+			if (!this.view.active) {
+				this.view.active = true;
+				this.manager.trigger("modelActivated", [ this.model ]);
+			}
 		},
 		ajax : function(path, settings) {
-			console.log("api call to ---> " + path);
-			// this.manager.ajax(path, settings);
+			this.manager.ajax(path, settings);
 		},
 		delay : function(func, arg, millis) {
 			var f = _.bind(func, this), millis = millis || 10000;
@@ -648,6 +660,14 @@
 			dialog.html("<table>" + compiled({
 				"model" : this.model
 			}) + "</table>");
+		},
+		connect : function(controller) {
+			this.connections.push(controller);
+		},
+		disconnect : function(connected) {
+			this.connections = _.reject(this.connections, function(controller) {
+				return connected.id == controller.id;
+			});
 		}
 	};
 
@@ -657,6 +677,7 @@
 		this.dialogTitle = "EC2 インスタンス";
 		this.type = "ec2";
 		this.connectableTypes = [ "ebs", "elb" ];
+		this.deviceCount = 0;
 		this.reset();
 	};
 
@@ -667,7 +688,7 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					this.delay(this._reload, 0, 8000);
+					this.delay(this.reload, 0, 8000);
 				}
 			});
 		},
@@ -683,9 +704,8 @@
 				}
 			});
 		},
-		_reload : function(count) {
-			if (this.model == null || this.model.instanceId == null
-					|| this.model.state.code == 16) {
+		reload : function(count) {
+			if (this.model == null || this.model.instanceId == null) {
 				return;
 			}
 			if (count == 6) {
@@ -699,12 +719,19 @@
 					this.model = data;
 					if (this.model.state.code != 16) {
 						count++;
-						this.delay(this._reload, count, 8000);
+						this.delay(this.reload, count, 8000);
 					} else {
 						this.onActive();
 					}
 				}
 			});
+		},
+		getAvailableDevice : function() {
+			var start = 'f';
+			var suffix = String.fromCharCode(start.charCodeAt(0)
+					+ this.deviceCount);
+			this.deviceCount++;
+			return "/dev/sd" + suffix;
 		}
 	});
 
@@ -724,7 +751,7 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					this.delay(this._reload, 0, 5000);
+					this.delay(this.reload, 0, 5000);
 				}
 			});
 		},
@@ -740,9 +767,8 @@
 				}
 			});
 		},
-		_reload : function(count) {
-			if (this.model == null || this.model.volumeId == null
-					|| this.model.state == "available") {
+		reload : function(count) {
+			if (this.model == null || this.model.volumeId == null) {
 				return;
 			}
 			if (count == 6) {
@@ -754,9 +780,9 @@
 				context : this,
 				success : function(data) {
 					this.model = data;
-					if (this.model.state != "available") {
+					if (!_.include(["available","in-use"],this.model.state)) {
 						count++;
-						this.delay(this._reload, count, 5000);
+						this.delay(this.reload, count, 5000);
 					} else {
 						this.onActive();
 					}
@@ -789,11 +815,20 @@
 			if (this.model == null) {
 				return;
 			}
-			var path = "/api/elb/delete/" + this.model.name;
+			var path = "/api/elb/delete/" + this.model.loadBalancerName;
 			this.ajax(path, {
 				context : this,
 				success : function(data) {
 					this.model = null;
+				}
+			});
+		},
+		reload : function(count) {
+			var path = "/api/elb/balancer/" + this.model.loadBalancerName;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					this.model = data;
 				}
 			});
 		}
@@ -814,9 +849,10 @@
 			var conn = Connection.create(from, to);
 			if (conn && conn.connectable()) {
 				this.model = conn;
+				conn.parent = this;
 				conn.onAdd();
 			} else {
-				this.manager.trigger("viewInvalidated", view);
+				this.manager.trigger("viewInvalidated", this.view);
 			}
 		},
 		onRemove : function() {
@@ -828,17 +864,30 @@
 	});
 
 	var Connection = function() {
+		this.reset();
 	}
 
 	Connection.prototype = {
+		reset : function() {
+			this.id = _.uniqueId("connection");
+			this.parent = null;
+			this.model = null;
+		},
 		connectable : function() {
 			return false;
 		},
-		onAdd : function(){			
+		onAdd : function() {
 		},
-		onRemove : function(){			
+		onRemove : function() {
+		},
+		ajax : function(path,settings){
+			// まだ有効な connection でない場合 controller が割り当てられていない
+			if(this.parent == null){
+				return;
+			}
+			this.parent.ajax(path,settings);
 		}
-	}
+	};
 
 	Connection.create = function(a, b) {
 		if (!_.include(a.connectableTypes, b.type)
@@ -851,20 +900,106 @@
 			return new ELBConnection(a, b);
 		}
 		return null;
+	};
+
+	Connection.selectType = function(args, type) {
+		var getSelector = function(type) {
+			return function(controller) {
+				return controller.type == type;
+			}
+		};
+		return _(args).chain().select(getSelector(type)).first().value();
 	}
 
-	var EBSConnection = function(a,b) {
-	}
-	
-	_.extend(EBSConnection.prototype, Connection.prototype, {		
+	var EBSConnection = function(a, b) {
+		this.ec2 = Connection.selectType([ a, b ], "ec2");
+		this.ebs = Connection.selectType([ a, b ], "ebs");
+		this.reset();
+	};
+
+	_.extend(EBSConnection.prototype, Connection.prototype, {
+		connectable : function() {
+			// 既に接続されていないかどうか
+			return this.ebs.model.state == "available";
+		},
+		onAdd : function() {
+			var path = "/api/ebs/attach/" + this.ebs.model.volumeId;
+			this.ajax(path, {
+				context : this,
+				data : {
+					instanceId : this.ec2.model.instanceId,
+					device : this.ec2.getAvailableDevice()
+				},
+				success : function(data) {
+					this.model = data;
+					this.ec2.connect(this.parent);
+					this.ebs.connect(this.parent);
+					this.ec2.reload();
+					this.ebs.reload();
+				}
+			});
+		},
+		onDelete : function() {
+			var path = "/api/ebs/detach/" + this.ebs.model.volumeId;
+			this.ajax(path, {
+				context : this,
+				success : function(data) {
+					this.model = null;
+					this.ec2.disconnect(this.parent);
+					this.ebs.disconnect(this.parent);
+					this.ec2.reload();
+					this.ebs.reload();
+				}
+			});
+		}
 	});
-	
-	var ELBConnection = function(a,b) {
-	}
-	
-	_.extend(ELBConnection.prototype, Connection.prototype, {		
-	});	
-	
+
+	var ELBConnection = function(a, b) {
+		this.ec2 = Connection.selectType([ a, b ], "ec2");
+		this.elb = Connection.selectType([ a, b ], "elb");
+		this.reset();
+	};
+
+	_.extend(ELBConnection.prototype, Connection.prototype, {
+		connectable : function() {
+			var self = this;
+			return !_.any(this.elb.instances, function(i) {
+				return i.instanceId == self.ec2.model.instanceId;
+			});
+		},
+		onAdd : function() {
+			var name = this.elb.model.loadBalancerName;
+			var path = "/api/elb/register/" + name;
+			this.ajax(path, {
+				context : this,
+				data : {
+					instanceId : this.ec2.model.instanceId
+				},
+				success : function(data) {
+					this.model = data;
+					this.ec2.connect(this.parent);
+					this.elb.connect(this.parent);
+					this.elb.reload();
+				}
+			});
+		},
+		onDelete : function() {
+			var name = this.elb.model.loadBalancerName;
+			var path = "/api/elb/deregister/" + name;
+			this.ajax(path, {
+				context : this,
+				data : {
+					instanceId : this.ec2.model.instanceId
+				},
+				success : function(data) {
+					this.model = null;
+					this.ec2.disconnect(this.parent);
+					this.elb.disconnect(this.parent);
+					this.elb.reload();
+				}
+			});
+		}
+	});
 
 	var Line = function(a, b, c) {
 		this.a = a || 0;
