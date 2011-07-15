@@ -23,6 +23,7 @@ import com.amazonaws.services.ec2.model.DetachVolumeResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
+import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
@@ -99,7 +100,8 @@ public class EC2Service extends AbstractAWSService {
 	 */
 	public Instance runInstance(String imageId, String name) {
 		RunInstancesRequest request = new RunInstancesRequest(imageId, 1, 1)
-				.withInstanceType("t1.micro").withKeyName(keyName)
+				.withInstanceType(InstanceType.T1Micro.toString())
+				.withKeyName(keyName)
 				.withPlacement(new Placement(availabilityZone))
 				.withSecurityGroups("kanjava");
 		RunInstancesResult result = ec2.runInstances(request);

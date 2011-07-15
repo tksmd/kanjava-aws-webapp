@@ -56,9 +56,9 @@ public class AWSModule extends AbstractModule {
 		bind(String.class).annotatedWith(Names.named("EC2 KeyName"))
 				.toInstance("tksmd");
 		bind(String.class).annotatedWith(Names.named("Tomcat ImageId"))
-				.toInstance("ami-bef045bf");
+				.toInstance("ami-b6ee5bb7");
 		bind(String.class).annotatedWith(Names.named("GlassFish ImageId"))
-				.toInstance("ami-bef045bf");
+				.toInstance("ami-beee5bbf");
 
 		try {
 			credentials = new PropertiesCredentials(
